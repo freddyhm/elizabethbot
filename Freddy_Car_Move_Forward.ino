@@ -1,9 +1,3 @@
-/**********************************************************************
-  Product     : Freenove 4WD Car for UNO
-  Auther      : www.freenove.com
-  Modification: 2019/08/03
-**********************************************************************/
-
 #include "Servo.h" 
 
 #define PIN_SERVO      2
