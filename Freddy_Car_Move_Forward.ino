@@ -6,47 +6,43 @@
 
 #include "Servo.h" 
 
-#define PIN_SERVO      2       //define servo pin
+#define PIN_SERVO      2
 
-#define PIN_DIRECTION_RIGHT 3
-#define PIN_DIRECTION_LEFT  4
-#define PIN_MOTOR_PWM_RIGHT 5
-#define PIN_MOTOR_PWM_LEFT  6
-#define SPEED_RIGHT 100
-#define SPEED_LEFT 100
-#define TURN_SPEED 100
+#define PIN_CAR_DIRECTION_RIGHT 3
+#define PIN_CAR_DIRECTION_LEFT  4
+#define PIN_CAR_MOTOR_PWM_RIGHT 5
+#define PIN_CAR_MOTOR_PWM_LEFT  6
+#define CAR_SPEED_RIGHT 100
+#define CAR_SPEED_LEFT 100
+#define CAR_TURN_SPEED 100
 
 boolean moveCar = true;
 
-// sonic
-#define PIN_SONIC_TRIG    7    //define Trig pin
-#define PIN_SONIC_ECHO    8    //define Echo pin
-#define MAX_DISTANCE    300   //cm
-#define SONIC_TIMEOUT   (MAX_DISTANCE*60) // calculate timeout 
-#define SOUND_VELOCITY  340  //soundVelocity: 340m/s
-#define NO_OBJECT_NEARBY        
+#define PIN_SONIC_TRIG    7    
+#define PIN_SONIC_ECHO    8  
+#define MAX_SONIC_DISTANCE    300   
+#define SONIC_TIMEOUT   (MAX_SONIC_DISTANCE*60) 
+#define SONIC_SOUND_VELOCITY  340       
 
-Servo servo;             //create servo object
-byte servoOffset = 0;    //change the value to Calibrate servo
-u8 distance[4];          //define an arry with type u8(same to unsigned char)
+Servo servo;             
+byte servoOffset = 0;    // calibrate servo
+u8 distance[4];          
 u8 currentAngle;
 
 void setup() {
 
-  // car
-  pinMode(PIN_DIRECTION_LEFT, OUTPUT);
-  pinMode(PIN_MOTOR_PWM_LEFT, OUTPUT);
-  pinMode(PIN_DIRECTION_RIGHT, OUTPUT);
-  pinMode(PIN_MOTOR_PWM_RIGHT, OUTPUT);
-
-  // sonic
   Serial.begin(9600);
-  pinMode(PIN_SONIC_TRIG, OUTPUT);// set trigPin to output mode
-  pinMode(PIN_SONIC_ECHO, INPUT); // set echoPin to input mode
 
-  // servo
-  servo.attach(PIN_SERVO);        //initialize servo 
-  servo.write(90 + servoOffset);  // change servoOffset to Calibrate servo
+  pinMode(PIN_CAR_DIRECTION_LEFT, OUTPUT);
+  pinMode(PIN_CAR_MOTOR_PWM_LEFT, OUTPUT);
+  pinMode(PIN_CAR_DIRECTION_RIGHT, OUTPUT);
+  pinMode(PIN_CAR_MOTOR_PWM_RIGHT, OUTPUT);
+
+  pinMode(PIN_SONIC_TRIG, OUTPUT);
+  pinMode(PIN_SONIC_ECHO, INPUT); 
+
+  servo.attach(PIN_SERVO);
+  servo.write(90 + servoOffset);  
 }
 
 void loop() {
@@ -144,22 +140,22 @@ void detectObject(u8 distance, char direction) {
 
     if (direction == 'l' || direction == 'm')
     {
-      motorRun(TURN_SPEED, -TURN_SPEED);
+      motorRun(CAR_TURN_SPEED, -CAR_TURN_SPEED);
 
     } else if (direction == 'r')
     {
-      motorRun(-TURN_SPEED, TURN_SPEED);
+      motorRun(-CAR_TURN_SPEED, CAR_TURN_SPEED);
     }
 
     delay(1000);
     
 
-    //motorRun(SPEED_LEFT, SPEED_RIGHT);
+    //motorRun(CAR_SPEED_LEFT, CAR_SPEED_RIGHT);
   }
   else
   {
-    motorRun(SPEED_LEFT, SPEED_RIGHT);
-    //motorRun(TURN_SPEED, -TURN_SPEED);
+    motorRun(CAR_SPEED_LEFT, CAR_SPEED_RIGHT);
+    //motorRun(CAR_TURN_SPEED, -CAR_TURN_SPEED);
   }
 }
 
@@ -182,10 +178,10 @@ void motorRun(int speedl, int speedr) {
     speedr = -speedr;
   }
   
-  digitalWrite(PIN_DIRECTION_LEFT, dirL);
-  digitalWrite(PIN_DIRECTION_RIGHT, dirR);
-  analogWrite(PIN_MOTOR_PWM_LEFT, speedl);
-  analogWrite(PIN_MOTOR_PWM_RIGHT, speedr);
+  digitalWrite(PIN_CAR_DIRECTION_LEFT, dirL);
+  digitalWrite(PIN_CAR_DIRECTION_RIGHT, dirR);
+  analogWrite(PIN_CAR_MOTOR_PWM_LEFT, speedl);
+  analogWrite(PIN_CAR_MOTOR_PWM_RIGHT, speedr);
 }
 
 float getSonar() {
@@ -196,8 +192,8 @@ float getSonar() {
   digitalWrite(PIN_SONIC_TRIG, LOW);
   pingTime = pulseIn(PIN_SONIC_ECHO, HIGH, SONIC_TIMEOUT); // Wait HC-SR04 returning to the high level and measure out this waitting time
   if (pingTime != 0)
-    distance = (float)pingTime * SOUND_VELOCITY / 2 / 10000; // calculate the distance according to the time
+    distance = (float)pingTime * SONIC_SOUND_VELOCITY / 2 / 10000; // calculate the distance according to the time
   else
-    distance = MAX_DISTANCE;
+    distance = MAX_SONIC_DISTANCE;
   return distance; // return the distance value
 }
