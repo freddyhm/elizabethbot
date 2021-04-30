@@ -21,12 +21,15 @@ boolean moveCar = true;
 #define PIN_SONIC_TRIG    7    
 #define PIN_SONIC_ECHO    8  
 #define MAX_SONIC_DISTANCE    300   
-#define SONIC_TIMEOUT   (MAX_SONIC_DISTANCE*60) 
-#define SONIC_SOUND_VELOCITY  340       
+#define SONIC_TIMEOUT   (MAX_SONIC_DISTANCE * 60) 
+#define SONIC_SOUND_VELOCITY  340      
+
+#define DELAY_DURATION 1000
+#define INIT_SERVO_ANGLE 45
 
 Servo servo;             
 byte servoOffset = 0;    // calibrate servo
-u8 distance[4];          
+u8 distance[4];
 u8 currentAngle;
 
 void setup() {
@@ -42,13 +45,16 @@ void setup() {
   pinMode(PIN_SONIC_ECHO, INPUT); 
 
   servo.attach(PIN_SERVO);
-  servo.write(90 + servoOffset);  
+
+  int initialAngle = 90 + servoOffset;
+  servo.write(initialAngle);  
 }
 
 void loop() {
 
-  servo.write(45);
-  delay(1000);
+  servo.write(INIT_SERVO_ANGLE);
+
+  delay(DELAY_DURATION);
   
   currentAngle = servo.read();
 
@@ -68,7 +74,8 @@ void loop() {
   }
 
   servo.write(90);
-  delay(1000);
+
+  delay(DELAY_DURATION);
 
   currentAngle = servo.read();
 
@@ -106,7 +113,8 @@ void loop() {
   }
 
   servo.write(90);
-  delay(1000);
+
+  delay(DELAY_DURATION);
 
   currentAngle = servo.read();
  
@@ -136,7 +144,7 @@ void detectObject(u8 distance, char direction) {
 
     motorRun(0, 0);
 
-    delay(1000);
+    delay(DELAY_DURATION);
 
     if (direction == 'l' || direction == 'm')
     {
@@ -147,7 +155,7 @@ void detectObject(u8 distance, char direction) {
       motorRun(-CAR_TURN_SPEED, CAR_TURN_SPEED);
     }
 
-    delay(1000);
+    delay(DELAY_DURATION);
     
 
     //motorRun(CAR_SPEED_LEFT, CAR_SPEED_RIGHT);
