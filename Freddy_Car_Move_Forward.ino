@@ -1,5 +1,7 @@
 #include "Servo.h" 
 
+#define SERIAL_PORT 9600 
+
 #define PIN_SERVO      2
 
 #define PIN_CAR_DIRECTION_RIGHT 3
@@ -9,6 +11,10 @@
 #define CAR_SPEED_RIGHT 100
 #define CAR_SPEED_LEFT 100
 #define CAR_TURN_SPEED 100
+
+#define FRONT_ANGLE 45
+#define LEFT_ANGLE 90
+#define RIGHT_ANGLE 135
 
 boolean moveCar = true;
 
@@ -25,18 +31,33 @@ Servo servo;
 byte servoOffset = 0;    // calibrate servo
 u8 distance[4];
 u8 currentAngle;
+u8 distance_single;
 
 void setup() {
 
-  Serial.begin(9600);
+  Serial.begin(SERIAL_PORT);
 
+  setCarPins();
+  setSonicSensorPins();
+  setServo();
+}
+
+void setCarPins()
+{
   pinMode(PIN_CAR_DIRECTION_LEFT, OUTPUT);
   pinMode(PIN_CAR_MOTOR_PWM_LEFT, OUTPUT);
   pinMode(PIN_CAR_DIRECTION_RIGHT, OUTPUT);
   pinMode(PIN_CAR_MOTOR_PWM_RIGHT, OUTPUT);
+}
 
+void setSonicSensorPins()
+{
   pinMode(PIN_SONIC_TRIG, OUTPUT);
   pinMode(PIN_SONIC_ECHO, INPUT); 
+}
+
+void setServo()
+{
 
   servo.attach(PIN_SERVO);
 
@@ -44,121 +65,81 @@ void setup() {
   servo.write(initialAngle);  
 }
 
-void loop() {
-
-  servo.write(INIT_SERVO_ANGLE);
-
-  delay(DELAY_DURATION);
-  
-  currentAngle = servo.read();
-
-  Serial.print("Current Angle:");
-  Serial.print(servo.read());
-  Serial.print("\n");
-
-  if (currentAngle == 45)
-  {
-    distance[0] = getSonar();   
-    detectObject(distance[0], 'r');
-  
-    Serial.print("R:");
-
-    Serial.print(distance[0], 'r');
-    Serial.print('\n');  
-  }
-
-  servo.write(90);
-
-  delay(DELAY_DURATION);
-
-  currentAngle = servo.read();
-
-  Serial.print("Current Angle:");
-  Serial.print(servo.read());
-  Serial.print("\n");
-
-  if (currentAngle == 90)
-  {
-    distance[1] = getSonar();
-    detectObject(distance[1], 'm');
-  
-    Serial.print("M:");
-    Serial.print(distance[1]);
-    Serial.print('\n');   
-  }
-
-  servo.write(135);
-  delay(1000);
-
-  currentAngle = servo.read();
-
-  Serial.print("Current Angle:");
-  Serial.print(servo.read());
-  Serial.print("\n");
-
-  if (currentAngle == 135)
-  {
-    distance[2] = getSonar();
-    detectObject(distance[2], 'l');
-  
-    Serial.print("L:");
-    Serial.print(distance[2]);
-    Serial.print('\n');   
-  }
-
-  servo.write(90);
-
-  delay(DELAY_DURATION);
-
-  currentAngle = servo.read();
- 
-  Serial.print("Current Angle:");
-  Serial.print(servo.read());
-  Serial.print("\n");
-
-  if (currentAngle == 90)
-  {
-    distance[3] = getSonar();
-    detectObject(distance[3], 'm'); 
-  
-    Serial.print("M2:");
-    Serial.print(distance[3]);
-    Serial.print('\n');   
-  }
+void loop() 
+{
+  checkSonarAngleForObjects(FRONT_ANGLE);
+  checkSonarAngleForObjects(LEFT_ANGLE);
+  checkSonarAngleForObjects(RIGHT_ANGLE));
 }
 
-void detectObject(u8 distance, char direction) {
-  if(distance < 40 )
+void checkSonarAngleForObjects(u8 angle)
+{
+  changeSonarAngle(angle);
+
+  if (isObjectDetected())
   {
-
-    Serial.print("object detected in direction:");
-    Serial.print(direction);
-
-    Serial.print('\n');
-
-    motorRun(0, 0);
-
-    delay(DELAY_DURATION);
-
-    if (direction == 'l' || direction == 'm')
+    if (angle == FRONT_ANGLE)
     {
-      motorRun(CAR_TURN_SPEED, -CAR_TURN_SPEED);
-
-    } else if (direction == 'r')
+      turnCarRight();
+      print("Car has moved right with angle: ", angle);
+    } 
+    else if (currentAngle == RIGHT_ANGLE || currentAngle == LEFT_ANGLE)
     {
-      motorRun(-CAR_TURN_SPEED, CAR_TURN_SPEED);
-    }
-
-    delay(DELAY_DURATION);
-    
-
-    //motorRun(CAR_SPEED_LEFT, CAR_SPEED_RIGHT);
+      turnCarLeft();
+      print("Car has moved left with angle: ", angle);
+    } 
   }
   else
   {
-    motorRun(CAR_SPEED_LEFT, CAR_SPEED_RIGHT);
-    //motorRun(CAR_TURN_SPEED, -CAR_TURN_SPEED);
+    print("Car has moved forward with angle: ", angle);
+    moveCarForward();
   }
+}
+
+void turnCarRight()
+{
+  motorRun(CAR_TURN_SPEED, -CAR_TURN_SPEED);
+}
+
+void turnCarLeft()
+{
+  motorRun(-CAR_TURN_SPEED, CAR_TURN_SPEED);
+}
+
+void moveCarForward()
+{
+  motorRun(CAR_SPEED_LEFT, CAR_SPEED_RIGHT);
+}
+
+void changeSonarAngle(u8 newAngle)
+{
+  servo.write(newAngle);
+  delay(DELAY_DURATION);
+}
+
+void printSonarValue(const char* direction, u8 distance)
+{
+  print(direction, distance);
+}
+
+void printCurrentAngle()
+{
+  currentAngle = servo.read();
+  print("Current Angle:", servo.read());
+}
+
+bool isObjectDetected()
+{
+  distance_single = getSonar();
+  
+  if(distance_single < 40)
+  {
+    print("Object detected: ", distance_single);
+
+    return true;
+  }
+
+  return false;
 }
 
 void motorRun(int speedl, int speedr) {
@@ -179,7 +160,7 @@ void motorRun(int speedl, int speedr) {
     dirR = 0;
     speedr = -speedr;
   }
-  
+   
   digitalWrite(PIN_CAR_DIRECTION_LEFT, dirL);
   digitalWrite(PIN_CAR_DIRECTION_RIGHT, dirR);
   analogWrite(PIN_CAR_MOTOR_PWM_LEFT, speedl);
@@ -187,15 +168,28 @@ void motorRun(int speedl, int speedr) {
 }
 
 float getSonar() {
+  
   unsigned long pingTime;
+
   float distance;
+  
   digitalWrite(PIN_SONIC_TRIG, HIGH); // make trigPin output high level lasting for 10μs to triger HC_SR04,
   delayMicroseconds(100);
   digitalWrite(PIN_SONIC_TRIG, LOW);
+  
   pingTime = pulseIn(PIN_SONIC_ECHO, HIGH, SONIC_TIMEOUT); // Wait HC-SR04 returning to the high level and measure out this waitting time
+
   if (pingTime != 0)
     distance = (float)pingTime * SONIC_SOUND_VELOCITY / 2 / 10000; // calculate the distance according to the time
   else
     distance = MAX_SONIC_DISTANCE;
+  
   return distance; // return the distance value
+}
+
+void print(const char* parameter,int value)
+{
+  Serial.print(parameter);
+  Serial.print(value);
+  Serial.print("\n");
 }
